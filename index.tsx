@@ -1,16 +1,16 @@
- React from 'react';
+
+import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Aimportpp from './App';
+import App from './App';
 
 const rootElement = document.getElementById('root');
-
-if (rootElement) {
-    // Clear any previous content from the root element
-    rootElement.innerHTML = ''; 
-    const root = ReactDOM.createRoot(rootElement);
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
 }
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
