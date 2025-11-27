@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom/client';
 // Types
 import type { View, Product, CartItem } from './components/types';
 import type { Currency } from './components/currency';
