@@ -1,191 +1,276 @@
-import React from 'react';
-import { ProductCard, type Product } from './ProductCard';
-import type { Currency } from './currency';
 
-const ofertasProducts: Product[] = [
+import React from 'react';
+import { ProductCard } from './ProductCard';
+import type { Product, View } from './types';
+import type { Currency } from './currency';
+import { allProducts } from './products';
+
+// Update data structure to support internal navigation
+interface BannerData {
+    id: string;
+    imageUrl: string;
+    title: string;
+    buttonText: string;
+    action?: string; // Internal scroll action
+    view?: View;     // Internal view navigation
+    payload?: any;   // Payload for view
+}
+
+const banners: BannerData[] = [
     {
-        id: 101,
-        name: "Bálsamo BB Cream OnColour",
-        brand: "OnColour",
-        price: 3.55,
-        regularPrice: 10.00,
-        imageUrl: "https://i.imgur.com/k6r5k3L.png",
-        description: "Descubre la perfección 8 en 1. Nuestro Bálsamo BB Cream con SPF 10 no solo hidrata y unifica el tono de tu piel, sino que también la protege del sol. Su fórmula ligera se funde a la perfección para un acabado radiante y natural, disimulando imperfecciones y dejando un aspecto fresco durante todo el día. El imprescindible para tu rutina diaria.",
-        stock: 50,
-        category: 'makeup',
-        subCategory: 'OnColour',
-        rating: 4,
-        reviewCount: 88,
+        id: 'black-friday',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=b4f0fbe7-2786-457d-b0d1-2fcf05e82f5b&name=1_Promo_split_Week1_600x450&inputFormat=jpg',
+        title: 'Esta semana: Compra 2 con un 60% dto',
+        buttonText: 'SOLO HASTA 25.11',
+        action: 'scroll-black-friday'
     },
     {
-        id: 102,
-        name: "Maquillaje Everlasting Sync SPF 20",
-        brand: "THE ONE",
-        price: 10.67,
-        regularPrice: 20.00,
-        imageUrl: "https://i.imgur.com/gKj3a5T.png",
-        description: "Experimenta una base de maquillaje inteligente que se adapta a ti. Everlasting Sync con SPF 20 y Tecnología Skin Response se sincroniza con la humedad del ambiente para mantener tu piel fresca y equilibrada. Disfruta de una cobertura media-alta modulable, un acabado semi-mate de larga duración y protección UVA. ¡Luce una piel perfecta sin esfuerzo durante 30 horas!",
-        stock: 30,
-        category: 'makeup',
-        subCategory: 'THE ONE',
-        rating: 5,
-        reviewCount: 150,
+        id: 'magical-midnights',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=10eada9f-b5ef-4854-911a-34f17f58b371&name=2_Promo_split_NewCollection_600x450&inputFormat=jpg',
+        title: 'Nueva Colección especial Navidad',
+        buttonText: 'COMPRA PARA BRILLAR',
+        view: 'products',
+        payload: 'makeup' // Mapping to makeup category
     },
     {
-        id: 103,
-        name: "Pre-Champú Reparador Duologi",
-        brand: "DUOLOGI",
-        price: 5.82,
-        regularPrice: 15.00,
-        imageUrl: "https://i.imgur.com/eO3XW3h.png",
-        description: "Revoluciona tu cuidado capilar con nuestro Pre-Champú Reparador. Este tratamiento prelavado de lujo está formulado para reparar la fibra capilar y reducir visiblemente el daño desde el primer uso. Fortalece, protege y restaura tu cabello antes del champú, preparándolo para un acabado que se siente nuevo y saludable. Fórmula sin parabenos ni siliconas para un cuidado puro y efectivo.",
-        stock: 25,
-        category: 'hair',
-        rating: 4,
-        reviewCount: 45,
+        id: 'wellosophy-pack',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=e12555ba-0c42-4991-9821-7327bc9eae12&name=focus_banner_PWP&inputFormat=png',
+        title: '¡Tu plan personalizado de nutrición!',
+        buttonText: 'Ver más',
+        view: 'products',
+        payload: 'wellness'
     },
     {
-        id: 104,
-        name: "WellnessPack Mujer Wellosophy",
-        brand: "Wellosophy",
-        price: 34.99,
-        regularPrice: 47.00,
-        imageUrl: "https://i.imgur.com/mF4H2zS.png",
-        description: "Potencia tu bienestar diario desde dentro con WellnessPack Mujer. Cada sobre contiene una combinación experta de 12 vitaminas y 10 minerales, ácidos grasos Omega-3 de alta calidad procedentes de aceite de pescado sostenible y potentes antioxidantes, incluyendo la Astaxantina. Diseñado para cubrir las necesidades nutricionales de la mujer, apoya la belleza de la piel, la energía y el sistema inmunitario.",
-        stock: 20,
-        category: 'wellness',
-        rating: 5,
-        reviewCount: 210,
+        id: 'wellosophy-sub',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=b7da6e77-1fb1-46be-80cb-7bd1157cc06a&name=focus_banner_WS_bis&inputFormat=png',
+        title: '¡Suscríbete a Wellosophy!',
+        buttonText: 'Ver más',
+        view: 'products',
+        payload: 'wellness'
     },
     {
-        id: 105,
-        name: "Crema de Noche Reafirmante Royal Velvet",
-        brand: "Royal Velvet",
-        price: 18.68,
-        regularPrice: 42.00,
-        imageUrl: "https://i.imgur.com/DqG7K2r.png",
-        description: "Despierta con una piel visiblemente más firme y rejuvenecida. Nuestra Crema de Noche Reafirmante Royal Velvet, enriquecida con la exclusiva Infusión de Iris Negro, trabaja mientras duermes para fortalecer la estructura de la piel, mejorar la elasticidad y renovar el colágeno. Una experiencia nocturna de lujo para un contorno facial más definido.",
-        stock: 15,
-        category: 'skincare',
-        rating: 5,
-        reviewCount: 95,
+        id: 'gift-sets',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=e6a950aa-3fef-457c-bcbf-1058993497d0&name=3_Promo_split_GiftSets_600x450&inputFormat=jpg',
+        title: 'NUEVOS Sets perfectos para regalar',
+        buttonText: 'COMPRAR REGALOS',
+        view: 'ofertas',
+        payload: undefined // Stays on offers page
     },
     {
-        id: 106,
-        name: "Eau de Parfum Love Potion",
-        brand: "Oriflame",
-        price: 21.35,
-        regularPrice: 43.00,
-        imageUrl: "https://i.imgur.com/mP7G6xY.png",
-        description: "Desata tu poder de seducción con Love Potion. Una fragancia oriental y avainillada que explora el arte del amor. Sus notas afrodisíacas de jengibre especiado, flor de cacao y un toque de chocolate se entrelazan para crear una estela irresistible. El elixir perfecto para momentos inolvidables.",
-        stock: 18,
-        category: 'perfume',
-        rating: 4,
-        reviewCount: 123,
+        id: 'novage',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=6efc6ae1-0a1d-4df6-97f8-d785fa0c0476&name=5_Promo_split_Novage_600x450&inputFormat=jpg',
+        title: 'Contorno de Ojos con 40% dto',
+        buttonText: 'ELIGE EL TUYO',
+        view: 'products',
+        payload: 'skincare'
     },
     {
-        id: 107,
-        name: "Mascarilla Nocturna Novage+",
-        brand: "NOVAGE+",
-        price: 17.79,
-        regularPrice: 39.00,
-        imageUrl: "https://i.imgur.com/R3e8v5X.png",
-        description: "Dale a tu piel un respiro y una recarga de hidratación intensa durante la noche. La Mascarilla Nocturna Novage+ está formulada con Ácido Hialurónico y nutritivo aceite Inca Inchi para borrar los signos de fatiga, fortalecer la barrera cutánea y restaurar la luminosidad. Despierta con un rostro visiblemente más descansado, suave y radiante.",
-        stock: 22,
-        category: 'skincare',
-        rating: 5,
-        reviewCount: 78,
+        id: 'duologi',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=df88458d-0b4f-4f26-80a4-bc41f7aade2b&name=6_Promo_split_Duologi_600x450&inputFormat=jpg',
+        title: 'Pide tu Acondicionador (rico o ligero) Duologi por solo 6,99€ comprando un producto de la lista',
+        buttonText: 'VER MÁS',
+        action: 'scroll-duologi'
     },
     {
-        id: 108,
-        name: "Polvos Compactos con Serum Giordani Gold",
-        brand: "GIORDANI GOLD",
-        price: 17.79,
-        regularPrice: 26.00,
-        imageUrl: "https://i.imgur.com/Z4c9e4V.png",
-        description: "Más que un maquillaje, un tratamiento para tu piel. Los Polvos Compactos Giordani Gold fusionan un color de alta definición con un potente Serum Rejuvenecedor. Enriquecidos con Ácido Hialurónico hidratante y Extracto de Peonía Blanca, perfeccionan la tez mientras la cuidan. Incluyen Filtro Solar SPF para una protección diaria. El toque final para un acabado sedoso y luminoso.",
-        stock: 35,
-        category: 'makeup',
-        subCategory: 'Giordani Gold',
-        rating: 4,
-        reviewCount: 65,
-    },
-    {
-        id: 109,
-        name: "Crema Reparadora Talones Agrietados Feet Up",
-        brand: "Feet Up Expert",
-        price: 6.22,
-        regularPrice: 15.00,
-        imageUrl: "https://i.imgur.com/mY77z9U.png",
-        description: "¡Resultados visibles en 3 días! Esta crema de acción intensiva con Urea al 10%, tecnología Pro-Barrier y Empeline, repara e hidrata los talones agrietados. Clínicamente probada, restaura la suavidad y protege la barrera de la piel para unos pies sanos y bonitos.",
-        stock: 40,
-        category: 'personal-care',
-        rating: 5,
-        reviewCount: 195,
-    },
-     {
-        id: 110,
-        name: "Acondicionador Suavizante Miel y Leche",
-        brand: "Milk & Honey Gold",
-        price: 6.99,
-        regularPrice: 13.00,
-        imageUrl: "https://i.imgur.com/dK5zL9R.png",
-        description: "Un acondicionador lujoso y cremoso para las pieles más delicadas. Enriquecido con extractos orgánicos de leche y miel, nutre y regenera en profundidad. Calma, suaviza y alivia picores, siendo ideal para cabello seco y pieles con condiciones como dermatitis o psoriasis.",
-        stock: 30,
-        category: 'hair',
-        rating: 4,
-        reviewCount: 77,
-    },
-    {
-        id: 111,
-        name: "Champú Suavizante Miel y Leche",
-        brand: "Milk & Honey Gold",
-        price: 6.99,
-        regularPrice: 13.00,
-        imageUrl: "https://i.imgur.com/rS2Xy5s.png",
-        description: "Limpia y nutre tu cabello con este champú rico e hidratante. Su fórmula con extractos orgánicos de leche y miel es súper hidratante, regenera, calma y suaviza. Perfecto para el cabello seco y el cuidado de pieles delicadas, aliviando condiciones como la piel atópica o la psoriasis.",
-        stock: 30,
-        category: 'hair',
-        rating: 4,
-        reviewCount: 82,
-    },
-    {
-        id: 112,
-        name: "Champú Matizador Duologi",
-        brand: "DUOLOGI",
-        price: 7.56,
-        regularPrice: 15.00,
-        imageUrl: "https://i.imgur.com/pU2R6hF.png",
-        description: "Neutraliza los tonos anaranjados y amarillentos no deseados en cabellos rubios y con mechas. Este champú con pigmentos violetas y Aminoácidos de Seda revitaliza el color, dejándolo brillante, suave y sin tonos cobrizos. ¡Consigue el rubio perfecto!",
-        stock: 20,
-        category: 'hair',
-        rating: 5,
-        reviewCount: 35,
+        id: 'deodorants',
+        imageUrl: 'https://media-cdn.oriflame.com/contentImage?externalMediaId=ff411183-8497-4756-bad2-c5de537fc1be&name=7_Promo_split_Backcover_600x450&inputFormat=jpg',
+        title: 'Cada Roll On por solo 3,99€',
+        buttonText: 'VER LA COLECCIÓN',
+        view: 'products',
+        payload: 'personal-care'
     }
 ];
+
+// Acondicionadores Duologi (La Oferta)
+const conditionerIds = [44960, 44961];
+const conditionerProducts = allProducts.filter(p => conditionerIds.includes(p.id));
+
+// Productos Selección (Trigger Products)
+const triggerProductIds = [
+    47440, 46987, 47009, // Love Nature Simple Joys
+    46642, 46731, 45799, 45800, 47450, // Essense & Co
+    46801, // Divine Dark Velvet
+    46968, 46969, 46970, 46971, // Milk & Honey
+    36151, // Tender Care
+    47878, // Esponja
+    47677, // Cepillo
+    47202, // Crema Manos Pasión
+];
+const triggerProducts = allProducts.filter(p => triggerProductIds.includes(p.id));
+
+// Black Friday Products
+const blackFridayProductIds = [38557, 42236, 38556, 42255, 41059, 47104, 47006];
+const blackFridayProducts = allProducts.filter(p => blackFridayProductIds.includes(p.id));
 
 
 const OfertasPage: React.FC<{
     currency: Currency;
-    onAddToCart: (product: Product, buttonElement: HTMLButtonElement) => void;
+    onAddToCart: (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => void;
+    onQuickAddToCart: (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => void;
+    onBuyNow: (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => void;
     onProductSelect: (product: Product) => void;
-}> = ({ currency, onAddToCart, onProductSelect }) => {
+    onQuickView: (product: Product) => void;
+    onNavigate: (view: View, payload?: any) => void;
+}> = ({ currency, onAddToCart, onQuickAddToCart, onBuyNow, onProductSelect, onQuickView, onNavigate }) => {
+
+    const handleBannerClick = (banner: BannerData) => {
+        if (banner.action === 'scroll-duologi') {
+            const element = document.getElementById('duologi-section');
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else if (banner.action === 'scroll-black-friday') {
+            const element = document.getElementById('black-friday-section');
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else if (banner.view) {
+            onNavigate(banner.view, banner.payload);
+            window.scrollTo(0, 0);
+        }
+    };
+
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-                <h2 className="text-4xl font-extrabold text-black tracking-tight">Ofertas Destacadas</h2>
-                <p className="mt-2 text-xl text-gray-600 font-semibold">Catálogo Actual</p>
+        <div className="bg-white min-h-screen">
+             {/* Header Section */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+                <div className="mb-6">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-black mb-6">Solo las mejores ofertas</h1>
+                </div>
+                
+                {/* Tabs / Navigation Visual */}
+                <div className="border-b border-gray-200 mb-6">
+                    <div className="flex space-x-8 overflow-x-auto scrollbar-hide">
+                        <button className="border-b-2 border-brand-primary text-brand-primary font-semibold py-2 px-1 whitespace-nowrap">
+                            Solo las mejores ofertas
+                        </button>
+                    </div>
+                </div>
+
+                {/* Intro Text */}
+                <div className="mb-8 text-gray-700 text-base leading-relaxed max-w-4xl">
+                    <p>Si buscas gangas y descuentos, ¡estás en el lugar adecuado! Hemos reunido aquí todas las mejores ofertas de la campaña actual para que no te pierdas ninguna.</p>
+                </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {ofertasProducts.map(product => (
-                    <ProductCard
-                        key={product.id}
-                        product={product}
-                        currency={currency}
-                        onAddToCart={onAddToCart}
-                        onProductSelect={onProductSelect}
-                    />
-                ))}
+
+            {/* Banners Grid */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {banners.map((banner) => (
+                         <div 
+                            key={banner.id} 
+                            className="group relative cursor-pointer overflow-hidden rounded-lg bg-gray-50 shadow-sm hover:shadow-md transition-shadow"
+                            onClick={() => handleBannerClick(banner)}
+                         >
+                            <div className="relative aspect-[4/3] overflow-hidden">
+                                <img 
+                                    src={banner.imageUrl} 
+                                    alt={banner.title}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                            </div>
+                            
+                            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 via-black/30 to-transparent text-white">
+                                <h3 className="text-xl font-bold mb-4 leading-tight shadow-black drop-shadow-md">
+                                    {banner.title}
+                                </h3>
+                                <button className="bg-[#f78df685] text-black border-2 border-[#f78df6] font-bold py-2 px-6 rounded-sm uppercase text-sm tracking-wider hover:bg-white hover:text-[#d946ef] transition-colors shadow-lg">
+                                    {banner.buttonText}
+                                </button>
+                            </div>
+                         </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Black Friday Section */}
+            <div id="black-friday-section" className="bg-fuchsia-50 py-12 border-t border-fuchsia-100 scroll-mt-24">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-10">
+                        <span className="inline-block py-1 px-3 rounded-full bg-black text-white text-xs font-bold uppercase tracking-wider mb-4">Black Friday</span>
+                        <h2 className="text-3xl font-extrabold text-black mb-4">Compra 2 con un 60% Dto.</h2>
+                        <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+                            Combina tus favoritos de esta selección y llévatelos con un descuento espectacular.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                        {blackFridayProducts.map(product => (
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                currency={currency}
+                                onAddToCart={onAddToCart}
+                                onQuickAddToCart={onQuickAddToCart}
+                                onBuyNow={onBuyNow}
+                                onProductSelect={onProductSelect}
+                                onQuickView={onQuickView}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Duologi Interactive Section */}
+            <div id="duologi-section" className="bg-white py-12 border-t border-gray-100 scroll-mt-24">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                     <div className="text-center mb-10">
+                        <h2 className="text-3xl font-extrabold text-black mb-4">Configura tu Pack Duologi</h2>
+                        <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+                            1. Añade uno de los productos de selección a tu cesta.<br/>
+                            2. ¡Llévate tu acondicionador favorito por solo 6,99€!
+                        </p>
+                    </div>
+
+                    <div className="grid lg:grid-cols-12 gap-10">
+                        {/* Step 1: The Trigger Products */}
+                        <div className="lg:col-span-8">
+                             <div className="flex items-center gap-3 mb-6 border-b border-fuchsia-200 pb-4">
+                                <div className="bg-gray-900 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0">1</div>
+                                <h3 className="text-xl font-bold text-gray-900">Elige tu producto de selección</h3>
+                             </div>
+                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {triggerProducts.slice(0, 6).map(product => (
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                        currency={currency}
+                                        onAddToCart={onAddToCart}
+                                        onQuickAddToCart={onQuickAddToCart}
+                                        onBuyNow={onBuyNow}
+                                        onProductSelect={onProductSelect}
+                                        onQuickView={onQuickView}
+                                    />
+                                ))}
+                             </div>
+                        </div>
+
+                        {/* Step 2: The Reward */}
+                        <div className="lg:col-span-4 bg-fuchsia-50 rounded-xl p-6 border border-fuchsia-100 h-fit sticky top-24 shadow-sm">
+                             <div className="flex items-center gap-3 mb-6 border-b border-fuchsia-100 pb-4">
+                                <div className="bg-brand-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0">2</div>
+                                <h3 className="text-xl font-bold text-gray-900">Elige tu Acondicionador</h3>
+                             </div>
+                             <div className="space-y-6">
+                                {conditionerProducts.map(product => (
+                                    <div key={product.id} className="relative">
+                                         <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                                            SOLO 6,99€
+                                        </div>
+                                        <ProductCard
+                                            product={product}
+                                            currency={currency}
+                                            onAddToCart={onAddToCart}
+                                            onQuickAddToCart={onQuickAddToCart}
+                                            onBuyNow={onBuyNow}
+                                            onProductSelect={onProductSelect}
+                                            onQuickView={onQuickView}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
