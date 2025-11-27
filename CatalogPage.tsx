@@ -1,230 +1,218 @@
-
 import React, { useState, useRef } from 'react';
-import { allProducts } from './products';
-import { ProductCard } from './ProductCard';
-import type { Product } from './types';
 import type { Currency } from './currency';
-
-// URL del Catálogo 16 actualizada
-const INTERACTIVE_CATALOG_URL = 'https://es-catalogue.oriflame.com/oriflame/es/2025016?HideStandardUI=true&Page=1';
-const FALLBACK_CATALOG_URL = 'https://es.oriflame.com/products/digital-catalogue-current';
+import type { Product } from './ProductCard';
+import { formatCurrency } from './currency';
+import { catalogPages, catalogProducts } from './catalogData';
 
 interface CatalogPageProps {
-    onAddToCart: (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => void;
-    onQuickAddToCart: (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => void;
-    onBuyNow: (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => void;
-    onProductSelect: (product: Product) => void;
-    onQuickView: (product: Product) => void;
     currency: Currency;
+    onAddToCart: (product: Product) => void;
+    onProductSelect: (product: Product) => void;
 }
 
-const VisaIcon = () => (
-    <svg className="w-10 h-6" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-       <rect width="38" height="24" rx="2" fill="white"/>
-       <path d="M15.5 15.5L13.5 4.5H11.5L9 10.5L7.5 6.5L7 4.5H5L8.5 15.5H11L13 9.5L14.5 4.5H15.5V15.5Z" fill="#1A1F71"/>
-       <path d="M20.5 15.5L22.5 4.5H20.5L19.5 9L18.5 4.5H16.5L18.5 15.5H20.5Z" fill="#1A1F71"/>
-       <path d="M26.5 15.5L28.5 4.5H26.5L25 8.5L23.5 4.5H21.5L23.5 15.5H26.5Z" fill="#1A1F71"/>
-       <path d="M32.5 4.5H29.5L28.5 9L27.5 4.5H25.5L28.5 15.5H30.5L34.5 4.5H32.5Z" fill="#1A1F71"/>
-       <path d="M11 15.5L13 4.5H15L13 15.5H11Z" fill="#1A1F71"/>
-       <path d="M25.7 6.8C25.2 6.6 24.6 6.5 24 6.5C22.6 6.5 21.5 7.2 21.5 8.6C21.5 9.6 22.4 10.2 23.1 10.5C23.8 10.8 24 11 24 11.3C24 11.7 23.6 11.9 23.1 11.9C22.5 11.9 22 11.8 21.6 11.6L21.3 12.8C21.8 13 22.5 13.1 23.1 13.1C24.7 13.1 25.8 12.3 25.8 10.9C25.8 9.8 25.1 9.2 24.3 8.9C23.6 8.6 23.3 8.3 23.3 8C23.3 7.7 23.7 7.5 24.1 7.5C24.6 7.5 25 7.6 25.4 7.8L25.7 6.8Z" fill="#1A1F71"/>
-       <path d="M30.6 6.5H28.9L28 11.5L28.9 6.5Z" fill="#1A1F71"/>
-       <path d="M32.9 6.5L32.5 8.6C32.3 7.9 32.1 7.2 31.8 6.5H30.2L30.6 8.6L30.2 11.5L31.1 6.5Z" fill="#1A1F71"/>
+const CloseIcon = () => (
+    <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
     </svg>
 );
 
-const MastercardIcon = () => (
-    <svg className="w-10 h-6" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="38" height="24" rx="2" fill="white"/>
-        <circle cx="13" cy="12" r="7" fill="#EB001B"/>
-        <circle cx="25" cy="12" r="7" fill="#F79E1B"/>
-        <path d="M19 16.4C20.3 15.4 21.2 13.8 21.2 12C21.2 10.2 20.3 8.6 19 7.6C17.7 8.6 16.8 10.2 16.8 12C16.8 13.8 17.7 15.4 19 16.4Z" fill="#FF5F00"/>
+const PlusIcon = () => (
+     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
     </svg>
 );
 
-const PayPalIcon = () => (
-    <svg className="w-10 h-6" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="38" height="24" rx="2" fill="white"/>
-        <path d="M26.5 7.5L23.5 7.5L22.5 13.5L26.5 7.5Z" fill="#003087"/>
-        <path d="M22.5 13.5L20.5 13.5L21.5 7.5L24.5 7.5L22.5 13.5Z" fill="#003087"/>
-        <path d="M14.5 7.5C15.5 7.5 16.5 8 16.5 9.5C16.5 10.5 16 11.5 15 11.5H13.5L14.5 7.5Z" fill="#003087"/>
-        <path d="M10.5 7.5H13.5L12.5 13.5H9.5L10.5 7.5Z" fill="#003087"/>
-        <path d="M13 12.5H11.5L12 9.5L13 12.5Z" fill="#009CDE"/>
-        <path d="M16 10.5C16 11.5 15.5 12.5 14.5 12.5H13L13.5 9.5H15C15.5 9.5 16 9.8 16 10.5Z" fill="#009CDE"/>
-        <path d="M20 7.5L18 13.5H16.5L18.5 7.5H20Z" fill="#009CDE"/>
-    </svg>
-);
 
-const CatalogPage: React.FC<CatalogPageProps> = ({ onAddToCart, onQuickAddToCart, onBuyNow, onProductSelect, onQuickView, currency }) => {
-    const [quickAddCode, setQuickAddCode] = useState('');
-    const [addStatus, setAddStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    const [statusMessage, setStatusMessage] = useState('');
-    const buttonRef = useRef<HTMLButtonElement>(null);
+const CatalogPage: React.FC<CatalogPageProps> = ({ currency, onAddToCart, onProductSelect }) => {
+    const [currentPageIndex, setCurrentPageIndex] = useState(6); // Start at a page with products
+    const [activeProductId, setActiveProductId] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const popoverBtnRef = useRef<HTMLButtonElement>(null);
 
-    const handleQuickAdd = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!quickAddCode.trim()) return;
 
-        const code = parseInt(quickAddCode.trim());
-        const product = allProducts.find(p => p.id === code);
-
-        if (product) {
-            onAddToCart(product, buttonRef.current, null);
-            setAddStatus('success');
-            setStatusMessage(`¡${product.name} añadido al carrito!`);
-            setQuickAddCode('');
-            
-            setTimeout(() => {
-                setAddStatus('idle');
-                setStatusMessage('');
-            }, 3000);
-        } else {
-            setAddStatus('error');
-            setStatusMessage('Producto no encontrado en stock online. Contáctanos.');
-            setTimeout(() => {
-                setAddStatus('idle');
-                setStatusMessage('');
-            }, 3000);
+    const handleNextPage = () => {
+        if (currentPageIndex < catalogPages.length - 1) {
+            setIsLoading(true);
+            setCurrentPageIndex(prev => prev + 1);
         }
     };
 
-    // Featured catalog products for the list below
-    const catalogProducts = allProducts.slice(0, 8); 
+    const handlePrevPage = () => {
+        if (currentPageIndex > 0) {
+            setIsLoading(true);
+            setCurrentPageIndex(prev => prev - 1);
+        }
+    };
+
+    const handleHotspotClick = (productId: number) => {
+        setActiveProductId(productId);
+    };
+
+    const handleClosePopover = () => {
+        setActiveProductId(null);
+    };
+
+    const handleViewDetails = (product: Product) => {
+        handleClosePopover();
+        onProductSelect(product);
+    }
+    
+    const handleAddToCartInPopover = (product: Product) => {
+        if (popoverBtnRef.current) {
+            onAddToCart(product);
+        }
+        handleClosePopover();
+    }
+
+    const currentPageData = catalogPages[currentPageIndex];
+    const activeProduct = activeProductId ? catalogProducts[activeProductId] : null;
+    const discountPercent = activeProduct?.regularPrice && activeProduct.regularPrice > activeProduct.price
+        ? Math.round(((activeProduct.regularPrice - activeProduct.price) / activeProduct.regularPrice) * 100)
+        : null;
+
 
     return (
-        <div className="w-full px-2 sm:px-4 py-6 bg-gray-50">
-            <div className="flex flex-col md:flex-row gap-6 h-full">
-                
-                {/* Catalog Viewer */}
-                <div className="flex-grow flex flex-col min-w-0">
-                    <div className="mb-4 flex items-center gap-4 flex-wrap md:flex-nowrap justify-center md:justify-start">
-                        <img 
-                            src="https://i0.wp.com/vellaperfumeria.com/wp-content/uploads/2025/06/1000003724-removebg-preview.png" 
-                            alt="Vellaperfumeria Logo" 
-                            className="h-20 w-auto object-contain" 
-                        />
-                        <div className="text-center md:text-left">
-                            <h1 className="text-3xl md:text-4xl font-extrabold text-black tracking-tight font-serif">Catálogo Actual (C16)</h1>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Explora el Catálogo 16 y descubre las mejores ofertas de temporada.
-                            </p>
-                        </div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+                <h1 className="text-4xl font-extrabold text-black tracking-tight mt-2">Catálogo Interactivo</h1>
+                <p className="mt-2 text-lg text-gray-600">Haz clic en los productos para ver más detalles y añadirlos al carrito.</p>
+            </div>
+
+            <div className="flex justify-between items-center mb-4">
+                <button
+                    onClick={handlePrevPage}
+                    disabled={currentPageIndex === 0}
+                    className="bg-gray-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                    &larr; Anterior
+                </button>
+                <div className="font-semibold text-lg">
+                    Página {currentPageData.pageNumber} / {catalogPages.length}
+                </div>
+                <button
+                    onClick={handleNextPage}
+                    disabled={currentPageIndex === catalogPages.length - 1}
+                    className="bg-gray-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                    Siguiente &rarr;
+                </button>
+            </div>
+
+            <div className="relative max-w-4xl mx-auto aspect-[1/1.414] bg-gray-200 rounded-lg shadow-lg overflow-hidden">
+                {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+                        <div className="w-16 h-16 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin"></div>
                     </div>
-                    
-                    <div 
-                        className="relative w-full flex-grow bg-white rounded-lg shadow-2xl overflow-hidden border border-gray-200" 
-                        style={{ minHeight: '80vh' }} 
+                )}
+                <img
+                    src={currentPageData.imageUrl}
+                    alt={`Catálogo página ${currentPageData.pageNumber}`}
+                    className="w-full h-full object-contain"
+                    onLoad={() => setIsLoading(false)}
+                    onError={() => setIsLoading(false)}
+                />
+                {!isLoading && currentPageData.hotspots.map((hotspot, index) => (
+                    <button
+                        key={index}
+                        onClick={() => handleHotspotClick(hotspot.productId)}
+                        className="absolute group focus:outline-none"
+                        style={hotspot.position}
+                        aria-label={`Ver producto ${catalogProducts[hotspot.productId]?.name}`}
                     >
-                        <iframe
-                            data-ipaper="true"
-                            src={INTERACTIVE_CATALOG_URL}
-                            title="Catálogo Digital BeautyShopVella"
-                            className="w-full h-full absolute inset-0"
-                            frameBorder="0"
-                            allowFullScreen
-                            loading="lazy"
-                        />
-                    </div>
-                    <div className="text-center mt-4">
-                        <a href={FALLBACK_CATALOG_URL} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 hover:text-fuchsia-700 hover:underline font-medium">
-                            ¿No puedes ver el catálogo? Abrir en ventana externa
-                        </a>
-                    </div>
-                </div>
-
-                {/* Quick Order Sidebar */}
-                <div className="w-full md:w-80 lg:w-96 flex-shrink-0 space-y-6">
-                    <div className="bg-white p-6 rounded-lg shadow-xl border border-gray-100 sticky top-24">
-                        <div className="flex items-center gap-2 mb-4 text-fuchsia-800">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
-                            <h2 className="text-lg font-bold text-black">Pedido Rápido</h2>
+                        <div className="absolute inset-0 bg-black/20 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                           <PlusIcon />
                         </div>
+                        <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-rose-500 rounded-full animate-pulse"></div>
+                    </button>
+                ))}
+            </div>
+             <div className="flex justify-between items-center mt-4">
+                <button
+                    onClick={handlePrevPage}
+                    disabled={currentPageIndex === 0}
+                    className="bg-gray-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                    &larr; Anterior
+                </button>
+                <button
+                    onClick={handleNextPage}
+                    disabled={currentPageIndex === catalogPages.length - 1}
+                    className="bg-gray-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                    Siguiente &rarr;
+                </button>
+            </div>
+
+
+            {activeProduct && (
+                 <div 
+                    className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+                    onClick={handleClosePopover}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="product-popover-title"
+                >
+                    <div 
+                        className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-auto relative transform transition-all duration-300 scale-95 opacity-0 animate-fade-in-scale"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={handleClosePopover} 
+                            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10"
+                            aria-label="Cerrar"
+                        >
+                            <CloseIcon />
+                        </button>
                         
-                        <div className="bg-fuchsia-50 p-4 rounded-md mb-6 border border-fuchsia-100">
-                            <p className="text-sm font-bold text-gray-800 mb-2">¿Cómo comprar?</p>
-                            <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
-                                <li>Mira el <strong>Código</strong> del producto en el catálogo.</li>
-                                <li>Ingresa el código aquí.</li>
-                                <li>¡Añádelo a tu cesta!</li>
-                            </ol>
+                        <div className="p-4">
+                           <img src={activeProduct.imageUrl} alt={activeProduct.name} className="w-full h-48 object-contain rounded-t-lg mb-4"/>
+                           <h3 id="product-popover-title" className="text-lg font-bold text-center">{activeProduct.name}</h3>
+                           <p className="text-sm text-gray-500 text-center mb-3">{activeProduct.brand}</p>
+                           
+                           <div className="flex items-baseline justify-center gap-2 mb-4">
+                                <p className="text-2xl font-bold text-black">{formatCurrency(activeProduct.price, currency)}</p>
+                                {activeProduct.regularPrice && activeProduct.regularPrice > activeProduct.price && (
+                                    <p className="text-md text-gray-500 line-through">{formatCurrency(activeProduct.regularPrice, currency)}</p>
+                                )}
+                                {discountPercent && (
+                                     <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                        -{discountPercent}%
+                                    </span>
+                                )}
+                           </div>
+
+                           <div className="flex flex-col gap-2">
+                                <button
+                                    ref={popoverBtnRef}
+                                    onClick={() => handleAddToCartInPopover(activeProduct)}
+                                    disabled={activeProduct.stock === 0}
+                                    className="w-full bg-[#EBCFFC] text-black font-bold py-2.5 rounded-lg hover:bg-[#e0c2fa] transition-colors disabled:bg-gray-300"
+                                >
+                                    {activeProduct.stock === 0 ? 'Agotado' : 'Añadir al carrito'}
+                                </button>
+                                 <button
+                                    onClick={() => handleViewDetails(activeProduct)}
+                                    className="w-full bg-gray-100 text-black font-semibold py-2.5 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                    Ver detalles
+                                </button>
+                           </div>
                         </div>
 
-                        <form onSubmit={handleQuickAdd} className="space-y-3">
-                            <div>
-                                <label htmlFor="quickCode" className="sr-only">Código del producto</label>
-                                <input
-                                    type="number"
-                                    id="quickCode"
-                                    placeholder="Código (ej: 38497)"
-                                    className="w-full border border-gray-300 rounded-md px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-400 focus:border-transparent"
-                                    value={quickAddCode}
-                                    onChange={(e) => setQuickAddCode(e.target.value)}
-                                />
-                            </div>
-                            <button
-                                ref={buttonRef}
-                                type="submit"
-                                disabled={!quickAddCode}
-                                className="w-full bg-[#f78df685] text-black border-2 border-[#f78df6] font-bold py-3 px-4 rounded-md hover:bg-white hover:text-[#d946ef] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg"
-                            >
-                                Añadir a la cesta
-                            </button>
-                        </form>
-
-                        {statusMessage && (
-                            <div className={`mt-4 p-3 rounded-md text-sm font-medium animate-fade-in ${
-                                addStatus === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                            }`}>
-                                {statusMessage}
-                            </div>
-                        )}
-
-                        <div className="mt-6 pt-6 border-t border-gray-100">
-                            <p className="text-xs font-semibold text-gray-500 text-center mb-3 uppercase tracking-wider">Pagos seguros con:</p>
-                            <div className="flex justify-center gap-3 grayscale-0 opacity-100">
-                                <VisaIcon />
-                                <MastercardIcon />
-                                <PayPalIcon />
-                            </div>
-                        </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Featured Products from Catalog (Visual Baskets) */}
-            <div className="mt-12 border-t border-gray-200 pt-12">
-                <div className="text-center mb-10">
-                    <h2 className="text-3xl font-extrabold text-black tracking-tight">Productos Destacados del Catálogo</h2>
-                    <p className="mt-2 text-lg text-gray-600">Compra directamente tus favoritos</p>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    {catalogProducts.map(product => (
-                        <ProductCard
-                            key={product.id}
-                            product={product}
-                            currency={currency}
-                            onAddToCart={onAddToCart}
-                            onQuickAddToCart={onQuickAddToCart}
-                            onBuyNow={onBuyNow}
-                            onProductSelect={onProductSelect}
-                            onQuickView={onQuickView}
-                        />
-                    ))}
-                </div>
-            </div>
-
-            <div className="js-logout-data" data-url-eshoplogout="https://es-eshop.oriflame.com/iframe/internal/Services.aspx"></div>
-
-            <style>{`
-                @keyframes fade-in {
-                    from { opacity: 0; transform: translateY(-5px); }
-                    to { opacity: 1; transform: translateY(0); }
+            )}
+             <style>
+                {`
+                @keyframes fade-in-scale {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
                 }
-                .animate-fade-in {
-                    animation: fade-in 0.3s ease-out forwards;
+                .animate-fade-in-scale {
+                    animation: fade-in-scale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
-            `}</style>
+                `}
+            </style>
         </div>
     );
 };
