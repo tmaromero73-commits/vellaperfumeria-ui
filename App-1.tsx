@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom/client';
 // Types
 import type { View, Product, CartItem } from './components/types';
 import type { Currency } from './components/currency';
@@ -42,6 +43,7 @@ const App: React.FC = () => {
     const [currency, setCurrency] = useState<Currency>('EUR');
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+    const [vParam, setVParam] = useState<string | null>(null);
     const [isLoadingCart, setIsLoadingCart] = useState(false);
 
     // Function to parse URL parameters and determine view
@@ -49,6 +51,7 @@ const App: React.FC = () => {
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const v = urlParams.get('v');
+            if (v) setVParam(v);
 
             const productId = urlParams.get('product_id');
             const category = urlParams.get('category');
