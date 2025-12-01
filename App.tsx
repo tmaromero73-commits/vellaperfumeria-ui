@@ -1,232 +1,318 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
+// Types
+import type { View, Product, CartItem } from './components/types';
+import type { Currency } from './components/currency';
+import { blogPosts } from './components/blogData';
+// Components
+import Header from './components/Header';
+import Footer from './components/Footer';
 import ProductList from './components/ProductList';
-import AlgaePage from './components/AlgaePage';
+import ShopPage from './components/ShopPage';
 import ProductDetailPage from './components/ProductDetailPage';
 import CartSidebar from './components/CartSidebar';
-import type { Currency } from './components/currency';
-import type { Product } from './components/ProductCard';
 import OfertasPage from './components/OfertasPage';
 import AsistenteIAPage from './components/AsistenteIAPage';
 import CatalogPage from './components/CatalogPage';
-import Header from './components/Header';
-import Footer from './components/Footer';
+import BlogPage from './components/BlogPage';
+import BlogPostPage from './components/BlogPostPage';
+import QuickViewModal from './components/QuickViewModal';
+import Breadcrumbs, { type BreadcrumbItem } from './components/Breadcrumbs';
+import CheckoutPage from './components/CheckoutPage';
 
-const WhatsAppIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="white">
-        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.919 6.066l-1.475 5.422 5.571-1.469z" />
-    </svg>
-);
-
-export type View = 'home' | 'products' | 'about' | 'contact' | 'algas' | 'productDetail' | 'ofertas' | 'ia' | 'catalog';
-
-export interface CartItem {
-    product: Product;
-    quantity: number;
-}
-
-const CART_STORAGE_KEY = 'vellaperfumeria_cart';
+type AppView = {
+    current: View;
+    payload?: any;
+};
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>('home');
-  const [currency, setCurrency] = useState<Currency>('EUR');
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    try {
-        const storedCart = localStorage.getItem(CART_STORAGE_KEY);
-        return storedCart ? JSON.parse(storedCart) : [];
-    } catch (error) {
-        console.error('Failed to parse cart from localStorage', error);
-        return [];
-    }
-  });
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+    const [view, setView] = useState<AppView>({ current: 'home' });
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [currency, setCurrency] = useState<Currency>('EUR');
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  useEffect(() => {
-      try {
-          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
-      } catch (error) {
-          console.error('Failed to save cart to localStorage', error);
-      }
-  }, [cartItems]);
-
-  const cartCount = useMemo(() => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  }, [cartItems]);
-
-  const handleNavigate = (view: View) => {
-    setCurrentView(view);
-    window.scrollTo(0, 0);
-  };
-  
-  const handleProductSelect = (product: Product) => {
-    setSelectedProduct(product);
-    handleNavigate('productDetail');
-  };
-
-  const handleAddToCart = (product: Product, buttonElement?: HTMLButtonElement) => {
-    setCartItems(prevItems => {
-        const existingItem = prevItems.find(item => item.product.id === product.id);
-        if (existingItem) {
-            return prevItems.map(item => 
-                item.product.id === product.id 
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
-            );
+    // Load cart from local storage on initial render
+    useEffect(() => {
+        try {
+            const storedCart = localStorage.getItem('vellaperfumeria_cart');
+            if (storedCart) {
+                setCartItems(JSON.parse(storedCart));
+            }
+        } catch (error) {
+            console.error("Failed to load cart from localStorage", error);
         }
-        return [...prevItems, { product, quantity: 1 }];
-    });
+    }, []);
 
-    // Shake the cart icon
-    const cartIcon = document.getElementById('cart-icon');
-    if (cartIcon) {
-        cartIcon.classList.add('shake');
-        setTimeout(() => cartIcon.classList.remove('shake'), 820);
-    }
-
-    if (buttonElement) {
-      // Provide feedback on the button
-      const originalText = buttonElement.innerHTML;
-      buttonElement.innerHTML = 'Añadido! ✔️';
-      buttonElement.classList.remove('bg-[#EBCFFC]', 'hover:bg-[#e0c2fa]', 'text-black');
-      buttonElement.classList.add('bg-green-500', 'text-white', 'cursor-not-allowed');
-      buttonElement.disabled = true;
-
-      // Reset button state after a delay
-      setTimeout(() => {
-          buttonElement.innerHTML = originalText;
-          buttonElement.classList.add('bg-[#EBCFFC]', 'hover:bg-[#e0c2fa]', 'text-black');
-          buttonElement.classList.remove('bg-green-500', 'text-white', 'cursor-not-allowed');
-          buttonElement.disabled = false;
-      }, 1200); 
-    }
-  };
-  
-  const handleUpdateCartQuantity = (productId: number, newQuantity: number) => {
-      if (newQuantity <= 0) {
-          // If quantity is 0 or less, remove the item
-          setCartItems(prevItems => prevItems.filter(item => item.product.id !== productId));
-      } else {
-          setCartItems(prevItems => prevItems.map(item => 
-              item.product.id === productId ? { ...item, quantity: newQuantity } : item
-          ));
-      }
-  };
-  
-  const handleRemoveFromCart = (productId: number) => {
-      setCartItems(prevItems => prevItems.filter(item => item.product.id !== productId));
-  };
-
-  const handleCheckout = () => {
-    console.log('--- Iniciando Proceso de Pago ---');
-    console.log('Artículos en el carrito:', cartItems);
-    const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-    console.log(`Total a pagar: ${total.toFixed(2)} EUR`);
-    alert('¡Gracias por tu compra! (Esto es una simulación)\n\nEl carrito se vaciará ahora.');
+    // Save cart to local storage whenever it changes
+    useEffect(() => {
+        try {
+            localStorage.setItem('vellaperfumeria_cart', JSON.stringify(cartItems));
+        } catch (error) {
+            console.error("Failed to save cart to localStorage", error);
+        }
+    }, [cartItems]);
     
-    setCartItems([]);
-    setIsCartOpen(false);
-  };
+    // Scroll to top on view change
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [view]);
 
+    const handleNavigate = useCallback((newView: View, payload?: any) => {
+        setView({ current: newView, payload });
+    }, []);
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header 
-        onNavigate={handleNavigate}
-        currency={currency}
-        onCurrencyChange={setCurrency}
-        cartCount={cartCount}
-        onCartClick={() => setIsCartOpen(true)}
-      />
-      <CartSidebar 
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
-        currency={currency}
-        onUpdateQuantity={handleUpdateCartQuantity}
-        onRemoveItem={handleRemoveFromCart}
-        onCheckout={handleCheckout}
-      />
-      <main className="flex-grow">
-        {currentView === 'home' && (
-           <section className="text-center py-24">
-                <img src="https://i.imgur.com/sFo732c.png" alt="Vellaperfumeria Logo" className="w-48 h-48 mx-auto mb-8" />
-                <button
-                    onClick={() => handleNavigate('products')}
-                    className="bg-[#EBCFFC] text-black font-bold py-3 px-12 rounded-lg hover:bg-[#e0c2fa] transition-colors"
-                >
-                    TIENDA
-                </button>
-            </section>
-        )}
-        {currentView === 'products' && 
-          <div className="py-8 px-4">
-            <ProductList 
-                currency={currency} 
-                onAddToCart={handleAddToCart}
-                onProductSelect={handleProductSelect}
+    const handleProductSelect = (product: Product) => {
+        handleNavigate('productDetail', product);
+    };
+
+    const showAddToCartConfirmation = (buttonElement: HTMLButtonElement | null) => {
+        if (!buttonElement) return;
+        const originalText = buttonElement.innerHTML;
+        // If the button contains SVG (new basket icon), we might want to handle it differently
+        // For now, simple feedback is good.
+        buttonElement.classList.add('text-green-400', 'border-green-400');
+        setTimeout(() => {
+            buttonElement.classList.remove('text-green-400', 'border-green-400');
+        }, 2000);
+    };
+
+    const handleAddToCart = (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => {
+        const cartItemId = selectedVariant 
+            ? `${product.id}-${Object.values(selectedVariant).join('-')}`
+            : `${product.id}`;
+            
+        const existingItem = cartItems.find(item => item.id === cartItemId);
+
+        if (existingItem) {
+            setCartItems(cartItems.map(item =>
+                item.id === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
+            ));
+        } else {
+            setCartItems([...cartItems, { id: cartItemId, product, quantity: 1, selectedVariant }]);
+        }
+        
+        setIsCartOpen(true);
+        if(buttonElement) showAddToCartConfirmation(buttonElement);
+    };
+    
+    const handleQuickAddToCart = (product: Product, buttonElement: HTMLButtonElement | null, selectedVariant: Record<string, string> | null) => {
+        handleAddToCart(product, buttonElement, selectedVariant);
+        if (!isCartOpen) setIsCartOpen(true);
+    };
+
+    const handleUpdateQuantity = (cartItemId: string, newQuantity: number) => {
+        if (newQuantity <= 0) {
+            handleRemoveItem(cartItemId);
+        } else {
+            setCartItems(cartItems.map(item =>
+                item.id === cartItemId ? { ...item, quantity: newQuantity } : item
+            ));
+        }
+    };
+
+    const handleRemoveItem = (cartItemId: string) => {
+        setCartItems(cartItems.filter(item => item.id !== cartItemId));
+    };
+
+    const handleClearCart = () => {
+        setCartItems([]);
+    };
+
+    const handleCheckout = () => {
+        setIsCartOpen(false);
+        handleNavigate('checkout');
+    };
+
+    const handleSelectPost = (post: any) => {
+        handleNavigate('blogPost', post);
+    };
+
+    const renderContent = () => {
+        switch (view.current) {
+            case 'home':
+                return <ProductList onNavigate={handleNavigate} onProductSelect={handleProductSelect} onAddToCart={handleAddToCart} onQuickAddToCart={handleQuickAddToCart} currency={currency} onQuickView={setQuickViewProduct} />;
+            case 'products':
+                return <ShopPage initialCategory={view.payload || 'all'} currency={currency} onAddToCart={handleAddToCart} onQuickAddToCart={handleQuickAddToCart} onProductSelect={handleProductSelect} onQuickView={setQuickViewProduct} />;
+            case 'productDetail':
+                return <ProductDetailPage product={view.payload} currency={currency} onAddToCart={handleAddToCart} onQuickAddToCart={handleQuickAddToCart} onProductSelect={handleProductSelect} onQuickView={setQuickViewProduct} />;
+            case 'ofertas':
+                return <OfertasPage currency={currency} onAddToCart={handleAddToCart} onQuickAddToCart={handleQuickAddToCart} onProductSelect={handleProductSelect} onQuickView={setQuickViewProduct} />;
+            case 'ia':
+                return <AsistenteIAPage />;
+            case 'catalog':
+                return <CatalogPage onAddToCart={handleAddToCart} onQuickAddToCart={handleQuickAddToCart} onProductSelect={handleProductSelect} onQuickView={setQuickViewProduct} currency={currency} />;
+            case 'blog':
+                 return <BlogPage posts={blogPosts} onSelectPost={handleSelectPost} />;
+            case 'blogPost':
+                 return <BlogPostPage post={view.payload} allPosts={blogPosts} onSelectPost={handleSelectPost} onBack={() => handleNavigate('blog')} />;
+            case 'checkout':
+                return <CheckoutPage cartItems={cartItems} currency={currency} onClearCart={handleClearCart} onNavigate={handleNavigate} />;
+            default:
+                return <ProductList onNavigate={handleNavigate} onProductSelect={handleProductSelect} onAddToCart={handleAddToCart} onQuickAddToCart={handleQuickAddToCart} currency={currency} onQuickView={setQuickViewProduct} />;
+        }
+    };
+    
+    const buildBreadcrumbs = (): BreadcrumbItem[] => {
+        const homeCrumb: BreadcrumbItem = { label: 'Inicio', onClick: () => window.location.href = 'https://vellaperfumeria.com' };
+        const crumbs = [homeCrumb];
+
+        switch(view.current) {
+            case 'products':
+                crumbs.push({ label: 'Tienda', onClick: () => handleNavigate('products', 'all') });
+                if (view.payload && view.payload !== 'all') {
+                    const categoryName = categories.find(c => c.key === view.payload)?.name || view.payload;
+                    crumbs.push({ label: categoryName });
+                }
+                break;
+            case 'productDetail':
+                {
+                    const product = view.payload as Product;
+                    const categoryName = categories.find(c => c.key === product.category)?.name || product.category;
+                    crumbs.push({ label: 'Tienda', onClick: () => handleNavigate('products', 'all') });
+                    crumbs.push({ label: categoryName, onClick: () => handleNavigate('products', product.category) });
+                    crumbs.push({ label: product.name });
+                }
+                break;
+            case 'ofertas':
+                crumbs.push({ label: 'Ideas Regalo' });
+                break;
+             case 'ia':
+                crumbs.push({ label: 'Asistente IA' });
+                break;
+            case 'catalog':
+                crumbs.push({ label: 'Catálogo' });
+                break;
+            case 'blog':
+                crumbs.push({ label: 'Blog' });
+                break;
+            case 'blogPost':
+                crumbs.push({ label: 'Blog', onClick: () => handleNavigate('blog') });
+                crumbs.push({ label: view.payload.title });
+                break;
+            case 'checkout':
+                crumbs.push({ label: 'Finalizar Compra' });
+                break;
+        }
+
+        return crumbs;
+    };
+
+    const categories = [
+        { key: 'all', name: 'Todos los productos' },
+        { key: 'skincare', name: 'Cuidado Facial' },
+        { key: 'makeup', name: 'Maquillaje' },
+        { key: 'perfume', name: 'Fragancias' },
+        { key: 'wellness', name: 'Wellness' },
+        { key: 'hair', name: 'Cuidado del Cabello' },
+        { key: 'personal-care', name: 'Cuidado Personal' },
+        { key: 'men', name: 'Hombre' },
+        { key: 'accessories', name: 'Accesorios' },
+    ];
+
+    return (
+        <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
+            <Header
+                onNavigate={handleNavigate}
+                currency={currency}
+                onCurrencyChange={setCurrency}
+                cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+                onCartClick={() => setIsCartOpen(true)}
+            />
+             <main className="flex-grow py-8 mb-16 md:mb-0">
+                <Breadcrumbs items={buildBreadcrumbs()} />
+                {renderContent()}
+            </main>
+            <Footer onNavigate={handleNavigate} />
+
+            <CartSidebar
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                cartItems={cartItems}
+                currency={currency}
+                onUpdateQuantity={handleUpdateQuantity}
+                onRemoveItem={handleRemoveItem}
+                onCheckout={handleCheckout}
+                isCheckingOut={false}
+                checkoutError={null}
                 onNavigate={handleNavigate}
             />
-          </div>
-        }
-        {currentView === 'catalog' && 
-          <div className="py-8 px-4">
-            <CatalogPage 
-                currency={currency} 
-                onAddToCart={handleAddToCart}
-                onProductSelect={handleProductSelect}
-            />
-          </div>
-        }
-        {currentView === 'ofertas' && 
-          <div className="py-8 px-4">
-            <OfertasPage 
-                currency={currency} 
-                onAddToCart={handleAddToCart}
-                onProductSelect={handleProductSelect}
-            />
-          </div>
-        }
-        {currentView === 'productDetail' && selectedProduct && (
-            <div className="py-8 px-4">
-                <ProductDetailPage 
-                    product={selectedProduct}
+
+            {quickViewProduct && (
+                <QuickViewModal
+                    product={quickViewProduct}
                     currency={currency}
+                    onClose={() => setQuickViewProduct(null)}
                     onAddToCart={handleAddToCart}
-                    onBack={() => handleNavigate('products')}
+                    onProductSelect={(p) => {
+                        setQuickViewProduct(null);
+                        handleProductSelect(p);
+                    }}
                 />
-            </div>
-        )}
-        {currentView === 'about' && (
-            <div className="container mx-auto text-center py-10 px-4">
-                <h2 className="text-3xl font-bold mb-4">Sobre Nosotros</h2>
-                <p className="text-black">Contenido sobre nosotros próximamente...</p>
-            </div>
-        )}
-        {currentView === 'contact' && (
-            <div className="container mx-auto text-center py-10 px-4">
-                <h2 className="text-3xl font-bold mb-4">Contacto</h2>
-                <p className="text-black">Información de contacto próximamente...</p>
-            </div>
-        )}
-        {currentView === 'algas' && <AlgaePage currency={currency}/>}
-        {currentView === 'ia' && <AsistenteIAPage />}
-      </main>
-      
-      <a
-        href="https://wa.me/661202616"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Contactar por WhatsApp"
-        className="fixed bottom-6 right-6 bg-green-500 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-transform transform hover:scale-110 z-30"
-      >
-        <WhatsAppIcon />
-        <span className="absolute -top-1 -right-1 flex h-5 w-5">
-            <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white"></span>
-        </span>
-      </a>
-      <Footer />
-    </div>
-  );
+            )}
+            
+            <style>{`
+                :root {
+                    --color-primary: #3a3a3a;
+                    --color-secondary: #E0C3FC; 
+                    --color-accent: #d1a892;
+                }
+                .btn-primary {
+                    background-color: var(--color-primary);
+                    color: white;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 0.375rem;
+                    font-weight: 600;
+                    transition: background-color 0.2s;
+                }
+                .btn-primary:hover {
+                    background-color: #555;
+                }
+                 .bg-brand-primary { background-color: #3a3a3a; }
+                 .text-brand-primary { color: #3a3a3a; }
+                 
+                 /* Moradito Claro - Soft Lilac */
+                 .bg-brand-purple { background-color: #E0C3FC; } 
+                 .text-brand-purple { color: #E0C3FC; }
+                 
+                 .bg-brand-purple-dark { background-color: #d1a892; }
+                 .text-brand-purple-dark { color: #d1a892; }
+                 .border-brand-purple { border-color: #E0C3FC; }
+                 .border-brand-purple-dark { border-color: #d1a892; }
+                 .ring-brand-purple { ring-color: #E0C3FC; }
+                 .ring-brand-purple-dark { ring-color: #d1a892; }
+                 .hover-underline-effect {
+                    display: inline-block;
+                    position: relative;
+                 }
+                 .hover-underline-effect::after {
+                    content: '';
+                    position: absolute;
+                    width: 100%;
+                    transform: scaleX(0);
+                    height: 2px;
+                    bottom: -2px;
+                    left: 0;
+                    background-color: var(--color-primary);
+                    transform-origin: bottom right;
+                    transition: transform 0.25s ease-out;
+                 }
+                 .hover-underline-effect:hover::after {
+                    transform: scaleX(1);
+                    transform-origin: bottom left;
+                 }
+                 .logo-inverted { filter: brightness(0) invert(1); }
+                 @keyframes pop {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.3); }
+                    100% { transform: scale(1); }
+                 }
+                 .animate-pop {
+                    animation: pop 0.3s ease-out;
+                 }
+            `}</style>
+        </div>
+    );
 };
 
 export default App;
