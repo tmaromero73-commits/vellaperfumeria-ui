@@ -25,7 +25,7 @@ export interface Product {
     category: 'perfume' | 'hair' | 'makeup' | 'skincare' | 'personal-care' | 'men' | 'wellness' | 'accessories';
     subCategory?: 'Giordani Gold' | 'THE ONE' | 'OnColour';
     productType?: 'Base' | 'Corrector' | 'Máscara' | 'Colorete y Bronceador' | 'Labial' | 'Accesorio de Maquillaje' | 'Cremas BB y CC';
-    tag?: 'NOVEDAD' | 'SET' | 'OFERTA' | 'EXISTENCIAS LIMITADAS' | 'DE VUELTA';
+    tag?: 'NOVEDAD' | 'SET' | 'OFERTA';
     statusLabel?: string;
     rating?: number;
     reviewCount?: number;
@@ -43,4 +43,4 @@ export interface CartItem {
 }
 
 // App view type
-export type View = 'home' | 'products' | 'productDetail' | 'ofertas' | 'ia' | 'catalog' | 'about' | 'contact' | 'blog' | 'blogPost' | 'checkoutSummary';
+export type View = 'home' | 'products' | 'productDetail' | 'ofertas' | 'ia' | 'catalog' | 'about' | 'contact' | 'blog' | 'blogPost' | 'checkout';
