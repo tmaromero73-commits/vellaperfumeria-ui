@@ -69,11 +69,11 @@ const App: React.FC = () => {
     const showAddToCartConfirmation = (buttonElement: HTMLButtonElement | null) => {
         if (!buttonElement) return;
         const originalText = buttonElement.innerHTML;
-        // If the button contains SVG (new basket icon), we might want to handle it differently
-        // For now, simple feedback is good.
-        buttonElement.classList.add('text-green-400', 'border-green-400');
+        buttonElement.innerHTML = '¡Añadido! ✔';
+        buttonElement.classList.add('bg-green-500', 'hover:bg-green-600');
         setTimeout(() => {
-            buttonElement.classList.remove('text-green-400', 'border-green-400');
+            buttonElement.innerHTML = originalText;
+            buttonElement.classList.remove('bg-green-500', 'hover:bg-green-600');
         }, 2000);
     };
 
