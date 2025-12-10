@@ -19,6 +19,7 @@ import BlogPostPage from './components/BlogPostPage';
 import QuickViewModal from './components/QuickViewModal';
 import Breadcrumbs, { type BreadcrumbItem } from './components/Breadcrumbs';
 import CheckoutPage from './components/CheckoutPage';
+import FloatingWhatsApp from './components/FloatingWhatsApp';
 
 type AppView = {
     current: View;
@@ -224,6 +225,8 @@ const App: React.FC = () => {
                 {renderContent()}
             </main>
             <Footer onNavigate={handleNavigate} />
+            
+            <FloatingWhatsApp />
 
             <CartSidebar
                 isOpen={isCartOpen}
